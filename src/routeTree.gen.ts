@@ -10,43 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as McpRouteImport } from './routes/mcp'
+import { Route as SplatRouteImport } from './routes/$'
+import { Route as ApiResourceIndexRouteImport } from './routes/api.$resource.index'
+import { Route as ApiResourceIdRouteImport } from './routes/api.$resource.$id'
+import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
+import { Route as ApiInternalSeedAdminRouteImport } from './routes/api.internal.seed-admin'
+import { Route as ApiProvisionSlugRouteImport } from './routes/api.provision.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiResourceIndexRoute = ApiResourceIndexRouteImport.update({
+  id: '/api/$resource/',
+  path: '/api/$resource/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiResourceIdRoute = ApiResourceIdRouteImport.update({
+  id: '/api/$resource/$id',
+  path: '/api/$resource/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInternalSeedAdminRoute = ApiInternalSeedAdminRouteImport.update({
+  id: '/api/internal/seed-admin',
+  path: '/api/internal/seed-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiProvisionSlugRoute = ApiProvisionSlugRouteImport.update({
+  id: '/api/provision/$slug',
+  path: '/api/provision/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/mcp': typeof McpRoute
+  '/$': typeof SplatRoute
+  '/api/$resource/$id': typeof ApiResourceIdRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
+  '/api/provision/$slug': typeof ApiProvisionSlugRoute
+  '/api/$resource/': typeof ApiResourceIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/mcp': typeof McpRoute
+  '/$': typeof SplatRoute
+  '/api/$resource/$id': typeof ApiResourceIdRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
+  '/api/provision/$slug': typeof ApiProvisionSlugRoute
+  '/api/$resource': typeof ApiResourceIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/mcp': typeof McpRoute
+  '/$': typeof SplatRoute
+  '/api/$resource/$id': typeof ApiResourceIdRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
+  '/api/provision/$slug': typeof ApiProvisionSlugRoute
+  '/api/$resource/': typeof ApiResourceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/mcp'
+  fullPaths:
+    | '/'
+    | '/$'
+    | '/api/$resource/$id'
+    | '/api/auth/$'
+    | '/api/internal/seed-admin'
+    | '/api/provision/$slug'
+    | '/api/$resource/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/mcp'
-  id: '__root__' | '/' | '/mcp'
+  to:
+    | '/'
+    | '/$'
+    | '/api/$resource/$id'
+    | '/api/auth/$'
+    | '/api/internal/seed-admin'
+    | '/api/provision/$slug'
+    | '/api/$resource'
+  id:
+    | '__root__'
+    | '/'
+    | '/$'
+    | '/api/$resource/$id'
+    | '/api/auth/$'
+    | '/api/internal/seed-admin'
+    | '/api/provision/$slug'
+    | '/api/$resource/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  McpRoute: typeof McpRoute
+  SplatRoute: typeof SplatRoute
+  ApiResourceIdRoute: typeof ApiResourceIdRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiInternalSeedAdminRoute: typeof ApiInternalSeedAdminRoute
+  ApiProvisionSlugRoute: typeof ApiProvisionSlugRoute
+  ApiResourceIndexRoute: typeof ApiResourceIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,11 +130,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/$resource/': {
+      id: '/api/$resource/'
+      path: '/api/$resource'
+      fullPath: '/api/$resource/'
+      preLoaderRoute: typeof ApiResourceIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/$resource/$id': {
+      id: '/api/$resource/$id'
+      path: '/api/$resource/$id'
+      fullPath: '/api/$resource/$id'
+      preLoaderRoute: typeof ApiResourceIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/seed-admin': {
+      id: '/api/internal/seed-admin'
+      path: '/api/internal/seed-admin'
+      fullPath: '/api/internal/seed-admin'
+      preLoaderRoute: typeof ApiInternalSeedAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/provision/$slug': {
+      id: '/api/provision/$slug'
+      path: '/api/provision/$slug'
+      fullPath: '/api/provision/$slug'
+      preLoaderRoute: typeof ApiProvisionSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -70,7 +177,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  McpRoute: McpRoute,
+  SplatRoute: SplatRoute,
+  ApiResourceIdRoute: ApiResourceIdRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiInternalSeedAdminRoute: ApiInternalSeedAdminRoute,
+  ApiProvisionSlugRoute: ApiProvisionSlugRoute,
+  ApiResourceIndexRoute: ApiResourceIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

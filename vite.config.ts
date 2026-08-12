@@ -16,6 +16,10 @@ const config = defineConfig({
     tsconfigPaths: true
   },
   plugins: [devtools(), nitro({
+    // Master deploys as a Cloudflare Worker: it needs the dispatch-namespace
+    // API, D1 and the R2 image bucket as bindings.
+    preset: 'cloudflare-module',
+    compatibilityDate: '2025-07-13',
     rollupConfig: {
       external: [/^@sentry\//]
     }

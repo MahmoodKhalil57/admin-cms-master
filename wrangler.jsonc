@@ -1,0 +1,48 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "admincms-master",
+  "compatibility_date": "2025-07-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+
+  // Master's own control-plane database.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "admincms-master",
+      "database_id": "509ae1b0-2c06-4f81-8bc7-85f921c59d02",
+      "migrations_dir": "drizzle"
+    }
+  ],
+
+  // Published node-template images. Master has no filesystem, so this is how a
+  // built node reaches it.
+  "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "admincms-images" }],
+
+  // Master must reach a freshly provisioned node to seed its owner. A Worker
+  // cannot fetch another Worker over workers.dev (Cloudflare error 1042), so
+  // that call goes through this binding rather than the public internet.
+  "services": [
+    { "binding": "GATEWAY", "service": "admincms-dispatcher" }
+  ],
+
+  "vars": {
+    // Where provisioned nodes answer, so master can finish setting them up.
+    // NODE_ZONE takes precedence once nodes have their own subdomains — and it
+    // must be a different registrable domain from master's, because a node can
+    // set cookies on its parent domain.
+    "DISPATCHER_URL": "https://admincms-dispatcher.the-montiapple.workers.dev",
+    "NODE_ZONE": "",
+    "GITHUB_TEMPLATE_REPO": "MahmoodKhalil57/pure-frontend-saastarter",
+    "ROUTING_KV_ID": "b7459f1e5be54559983fb42e21d9201b"
+  }
+
+  // Secrets, set with `wrangler secret put` — never in this file:
+  //   CLOUDFLARE_ACCOUNT_ID   account the nodes are created in
+  //   CLOUDFLARE_API_TOKEN    account-wide write access; the reason master is
+  //                           the only thing that holds it
+  //   BETTER_AUTH_SECRET      signs master's sessions
+  //   MASTER_NODE_KEY         derives each node's session secret; must be stable
+  //   MASTER_SEED_TOKEN       guards /api/internal/seed-admin; rotate after use
+}

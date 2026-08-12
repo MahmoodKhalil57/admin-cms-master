@@ -1,5 +1,16 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import { drizzle } from 'drizzle-orm/d1'
 
-import * as schema from './schema.ts'
+import type { MasterEnv } from '#/server/env'
+import * as schema from './schema'
 
-export const db = drizzle(process.env.DATABASE_URL!, { schema })
+/**
+ * Master's control-plane database.
+ *
+ * A factory, not a module-level client: the D1 binding only exists once a
+ * request is in flight.
+ */
+export function getDb(env: MasterEnv) {
+  return drizzle(env.DB, { schema })
+}
+
+export type MasterDb = ReturnType<typeof getDb>

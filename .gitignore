@@ -14,3 +14,10 @@ todos.json
 mcp-todos.json
 *storybook.log
 storybook-static
+
+# local dev database
+dev.db
+dev.db-journal
+*.db-wal
+*.db-shm
+CREDENTIALS.md

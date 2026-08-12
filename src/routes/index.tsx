@@ -1,9 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { tanStackRouterProvider } from "ra-router-tanstack";
-import { Admin } from "@/components/admin";
+import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute("/")({ component: App });
+import { AdminApp } from '#/components/admin-app'
 
-export function App() {
-  return <Admin routerProvider={tanStackRouterProvider}></Admin>;
-}
+export const Route = createFileRoute('/')({
+  ssr: false,
+  component: AdminApp,
+})
