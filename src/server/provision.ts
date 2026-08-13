@@ -508,7 +508,18 @@ async function applyNodeSchema(
         .replace(/^CREATE UNIQUE INDEX /i, 'CREATE UNIQUE INDEX IF NOT EXISTS ')
 
       const res = await queryD1(cfg, databaseId, guarded)
-      if (!res.ok) throw new Error(errorText(res))
+      if (!res.ok) {
+        // Re-provisioning runs every migration again, and SQLite has no
+        // `ADD COLUMN IF NOT EXISTS`. A column that is already there is the
+        // expected answer on the second run, not a failure — anything else
+        // still stops the provision.
+        const text = errorText(res)
+        if (/duplicate column name/i.test(text)) {
+          count++
+          continue
+        }
+        throw new Error(text)
+      }
       count++
     }
   }
