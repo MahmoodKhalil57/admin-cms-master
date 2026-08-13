@@ -14,6 +14,7 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as ApiResourceIndexRouteImport } from './routes/api.$resource.index'
 import { Route as ApiResourceIdRouteImport } from './routes/api.$resource.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
+import { Route as ApiInternalHostnameRouteImport } from './routes/api.internal.hostname'
 import { Route as ApiInternalSeedAdminRouteImport } from './routes/api.internal.seed-admin'
 import { Route as ApiProvisionSlugRouteImport } from './routes/api.provision.$slug'
 
@@ -42,6 +43,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInternalHostnameRoute = ApiInternalHostnameRouteImport.update({
+  id: '/api/internal/hostname',
+  path: '/api/internal/hostname',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInternalSeedAdminRoute = ApiInternalSeedAdminRouteImport.update({
   id: '/api/internal/seed-admin',
   path: '/api/internal/seed-admin',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/$': typeof SplatRoute
   '/api/$resource/$id': typeof ApiResourceIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/internal/hostname': typeof ApiInternalHostnameRoute
   '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
   '/api/provision/$slug': typeof ApiProvisionSlugRoute
   '/api/$resource/': typeof ApiResourceIndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/$': typeof SplatRoute
   '/api/$resource/$id': typeof ApiResourceIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/internal/hostname': typeof ApiInternalHostnameRoute
   '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
   '/api/provision/$slug': typeof ApiProvisionSlugRoute
   '/api/$resource': typeof ApiResourceIndexRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/$': typeof SplatRoute
   '/api/$resource/$id': typeof ApiResourceIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/internal/hostname': typeof ApiInternalHostnameRoute
   '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
   '/api/provision/$slug': typeof ApiProvisionSlugRoute
   '/api/$resource/': typeof ApiResourceIndexRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/api/$resource/$id'
     | '/api/auth/$'
+    | '/api/internal/hostname'
     | '/api/internal/seed-admin'
     | '/api/provision/$slug'
     | '/api/$resource/'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/api/$resource/$id'
     | '/api/auth/$'
+    | '/api/internal/hostname'
     | '/api/internal/seed-admin'
     | '/api/provision/$slug'
     | '/api/$resource'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/api/$resource/$id'
     | '/api/auth/$'
+    | '/api/internal/hostname'
     | '/api/internal/seed-admin'
     | '/api/provision/$slug'
     | '/api/$resource/'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   SplatRoute: typeof SplatRoute
   ApiResourceIdRoute: typeof ApiResourceIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiInternalHostnameRoute: typeof ApiInternalHostnameRoute
   ApiInternalSeedAdminRoute: typeof ApiInternalSeedAdminRoute
   ApiProvisionSlugRoute: typeof ApiProvisionSlugRoute
   ApiResourceIndexRoute: typeof ApiResourceIndexRoute
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/hostname': {
+      id: '/api/internal/hostname'
+      path: '/api/internal/hostname'
+      fullPath: '/api/internal/hostname'
+      preLoaderRoute: typeof ApiInternalHostnameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/internal/seed-admin': {
       id: '/api/internal/seed-admin'
       path: '/api/internal/seed-admin'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   SplatRoute: SplatRoute,
   ApiResourceIdRoute: ApiResourceIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiInternalHostnameRoute: ApiInternalHostnameRoute,
   ApiInternalSeedAdminRoute: ApiInternalSeedAdminRoute,
   ApiProvisionSlugRoute: ApiProvisionSlugRoute,
   ApiResourceIndexRoute: ApiResourceIndexRoute,

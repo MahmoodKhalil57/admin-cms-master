@@ -73,15 +73,19 @@ export function nodeBaseUrl(env: MasterEnv, slug: string): string | undefined {
 }
 
 /**
- * Derives a node's session-signing secret.
+ * Derives one of a node's secrets from the master key.
  *
- * Deterministic on purpose: re-uploading a node's Worker must not invalidate
- * every operator session it has open, which is what a freshly generated secret
- * on each provision would do.
+ * Deterministic on purpose, for two reasons. Re-uploading a node's Worker must
+ * not invalidate every operator session it has open, which a freshly generated
+ * signing secret would do. And the provisioning token has to be accepted by
+ * whichever version of the script is actually answering — dispatch lookups are
+ * eventually consistent, so a token minted for the upload that just happened is
+ * rejected by the version still being served.
  */
-async function deriveNodeSecret(
+export async function deriveNodeSecret(
   env: MasterEnv,
   slug: string,
+  purpose: string,
 ): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw',
@@ -93,7 +97,7 @@ async function deriveNodeSecret(
   const signature = await crypto.subtle.sign(
     'HMAC',
     key,
-    new TextEncoder().encode(`auth:${slug}`),
+    new TextEncoder().encode(`${purpose}:${slug}`),
   )
   return [...new Uint8Array(signature)]
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -312,9 +316,9 @@ export async function provisionNode(
   }
 
   // 8. Worker
-  // Held in memory for the seeding call below; the node keeps it as a secret
-  // binding, and master never stores it.
-  const provisionToken = crypto.randomUUID()
+  // Derived rather than random, so the version of the script that is currently
+  // being served accepts it even if it predates this upload.
+  const provisionToken = await deriveNodeSecret(env, slug, 'provision')
 
   const bindings: Array<Binding> = [
     { type: 'd1', name: 'DB', id: d1DatabaseId },
@@ -325,12 +329,35 @@ export async function provisionNode(
     // The node cannot work its own public address out from a request, because
     // the dispatch Worker strips the /n/<slug> prefix before forwarding.
     { type: 'plain_text', name: 'PUBLIC_URL', text: nodeBaseUrl(env, slug) ?? '' },
+    // One OAuth callback serves the whole fleet, because Cloudflare matches
+    // redirect_uri exactly and cannot take a per-node path.
+    {
+      type: 'plain_text',
+      name: 'OAUTH_CALLBACK_BASE',
+      text: (env.DISPATCHER_URL ?? '').replace(/\/+$/, ''),
+    },
+    // The one hostname every custom domain is CNAMEd at, so the DNS
+    // instruction is identical wherever the domain was bought.
+    {
+      type: 'plain_text',
+      name: 'ORIGIN_HOST',
+      text: env.ORIGIN_HOST ?? '',
+    },
+    // A service binding, not a URL: a Worker cannot fetch another Worker over
+    // workers.dev (Cloudflare error 1042), and a node has to reach master for
+    // the platform-side half of custom hostnames.
+    {
+      type: 'service',
+      name: 'MASTER',
+      service: env.MASTER_SCRIPT ?? 'admincms-master',
+      environment: 'production',
+    },
     // secret_text, not plain_text: neither of these may be readable back out of
     // the Workers API.
     {
       type: 'secret_text',
       name: 'BETTER_AUTH_SECRET',
-      text: await deriveNodeSecret(env, slug),
+      text: await deriveNodeSecret(env, slug, 'auth'),
     },
     { type: 'secret_text', name: 'PROVISION_TOKEN', text: provisionToken },
   ]
@@ -347,6 +374,23 @@ export async function provisionNode(
       },
     )
   }
+  // Optional: lets a node offer to write DNS records for an operator whose
+  // domain is already on Cloudflare.
+  if (env.CLOUDFLARE_CLIENT_ID && env.CLOUDFLARE_CLIENT_SECRET) {
+    bindings.push(
+      {
+        type: 'plain_text',
+        name: 'CLOUDFLARE_CLIENT_ID',
+        text: env.CLOUDFLARE_CLIENT_ID,
+      },
+      {
+        type: 'secret_text',
+        name: 'CLOUDFLARE_CLIENT_SECRET',
+        text: env.CLOUDFLARE_CLIENT_SECRET,
+      },
+    )
+  }
+
   // Lets a node register a verified custom domain with the router.
   if (env.ROUTING_KV_ID) {
     bindings.push({

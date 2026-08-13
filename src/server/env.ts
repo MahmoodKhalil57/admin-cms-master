@@ -35,6 +35,14 @@ export interface MasterEnv {
   /** where provisioned nodes answer, so master can finish setting them up */
   DISPATCHER_URL?: string
   NODE_ZONE?: string
+  /** the hostname customers CNAME a custom domain at */
+  ORIGIN_HOST?: string
+  /** the zone Cloudflare for SaaS runs on, where customer hostnames are registered */
+  SAAS_ZONE?: string
+  /** master's own script name, bound into nodes so they can call back */
+  MASTER_SCRIPT?: string
+  /** the dispatch Worker's script name */
+  DISPATCHER_SCRIPT?: string
 
   /**
    * The platform's GitHub OAuth app, handed to every node that runs the
@@ -48,6 +56,12 @@ export interface MasterEnv {
   GITHUB_CLIENT_SECRET?: string
   /** repo new sites are generated from, as `owner/repo` */
   GITHUB_TEMPLATE_REPO?: string
+  /**
+   * The platform's Cloudflare OAuth app, so a node can write DNS records into
+   * an operator's own zone instead of making them copy the records by hand.
+   */
+  CLOUDFLARE_CLIENT_ID?: string
+  CLOUDFLARE_CLIENT_SECRET?: string
   /**
    * Id of the shared hostname -> node KV namespace.
    *

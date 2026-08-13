@@ -34,8 +34,13 @@
     // set cookies on its parent domain.
     "DISPATCHER_URL": "https://admincms-dispatcher.the-montiapple.workers.dev",
     "NODE_ZONE": "",
-    "GITHUB_TEMPLATE_REPO": "MahmoodKhalil57/pure-frontend-saastarter",
-    "ROUTING_KV_ID": "b7459f1e5be54559983fb42e21d9201b"
+    "GITHUB_TEMPLATE_REPO": "MahmoodKhalil57/pure-frontend",
+    "ROUTING_KV_ID": "b7459f1e5be54559983fb42e21d9201b",
+    // The single CNAME target for every customer domain.
+    "ORIGIN_HOST": "nodes.saastemly.com",
+    "SAAS_ZONE": "saastemly.com",
+    "MASTER_URL": "https://admincms-master.the-montiapple.workers.dev",
+    "DISPATCHER_SCRIPT": "admincms-dispatcher"
   }
 
   // Secrets, set with `wrangler secret put` — never in this file:

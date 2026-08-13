@@ -96,6 +96,7 @@ export type Binding =
   | { type: 'plain_text'; name: string; text: string }
   | { type: 'secret_text'; name: string; text: string }
   | { type: 'assets'; name: string }
+  | { type: 'service'; name: string; service: string; environment?: string }
 
 /**
  * Builds the multipart body for a script upload.
