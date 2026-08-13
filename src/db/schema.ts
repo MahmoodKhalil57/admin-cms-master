@@ -29,6 +29,12 @@ export const nodes = sqliteTable('nodes', {
   status: text().notNull().default('pending'),
   /** which build of the node template this node is running */
   templateVersion: text('template_version'),
+  /**
+   * Which template combo this node was created from — the key of an entry in
+   * the template catalog. Recorded rather than derived, so a node keeps saying
+   * where it came from even after the catalog moves on.
+   */
+  templateKey: text('template_key'),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(
     sql`(unixepoch())`,
   ),

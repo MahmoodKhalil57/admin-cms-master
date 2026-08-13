@@ -1,0 +1,1 @@
+ALTER TABLE `nodes` ADD `template_key` text;

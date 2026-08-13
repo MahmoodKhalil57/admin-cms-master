@@ -7,6 +7,7 @@ import { getAuth } from '#/lib/auth'
 import { serverRoute } from '#/lib/server-route'
 import type { MasterEnv } from '#/server/env'
 import { getEnv } from '#/server/env'
+import { templateMaintainedBy } from '#/lib/template-catalog'
 import type { NodeOwner } from '#/server/provision'
 import { deprovisionNode, provisionNode } from '#/server/provision'
 
@@ -88,13 +89,19 @@ export const Route = createFileRoute('/api/provision/$slug')(
       // records which one — that link is what lets the two be related later.
       const owner = await resolveOwner(env, node.ownerUserId)
 
-      const result = await provisionNode(env, slug, { owner })
+      // Re-provisioning keeps the combo the node was created from; a fresh
+      // node takes whichever one it was created with.
+      const result = await provisionNode(env, slug, {
+        owner,
+        template: node.templateKey,
+      })
 
       await db
         .update(nodes)
         .set({
           status: result.ok ? 'active' : 'failed',
           templateVersion: result.templateVersion ?? node.templateVersion,
+          templateKey: result.templateKey ?? node.templateKey,
           ownerUserId: owner?.masterUserId ?? node.ownerUserId,
         })
         .where(eq(nodes.id, node.id))
@@ -106,6 +113,19 @@ export const Route = createFileRoute('/api/provision/$slug')(
       const env = getEnv(request)
       if (!(await requireSession(env, request))) {
         return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      // A base node is the template, not a copy of it: tearing it down takes
+      // the thing every future project is created from with it. Removing it
+      // from the catalog is the deliberate way to do that.
+      const maintains = templateMaintainedBy(params.slug)
+      if (maintains) {
+        return Response.json(
+          {
+            error: `This node maintains the "${maintains.name}" template. Remove it from the template catalog before tearing it down.`,
+          },
+          { status: 409 },
+        )
       }
 
       const result = await deprovisionNode(env, params.slug)

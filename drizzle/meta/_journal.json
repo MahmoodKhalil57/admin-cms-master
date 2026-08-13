@@ -8,6 +8,13 @@
       "when": 1786566134050,
       "tag": "0000_gorgeous_rumiko_fujikawa",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1786600086626,
+      "tag": "0001_brave_puff_adder",
+      "breakpoints": true
     }
   ]
 }

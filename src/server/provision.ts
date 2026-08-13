@@ -20,6 +20,7 @@ import { DISPATCH_NAMESPACE, planNode } from './node-plan'
 import type { Binding, NodeImage } from './node-image'
 import { buildUploadForm, loadImageFromR2 } from './node-image'
 import { uploadNodeAssets } from './node-assets'
+import { templateFor } from '#/lib/template-catalog'
 
 export interface ProvisionStep {
   name: string
@@ -34,6 +35,8 @@ export interface ProvisionResult {
   d1DatabaseId?: string
   kvNamespaceId?: string
   templateVersion?: string
+  /** which template combo was used */
+  templateKey?: string
   /** one-time password for the seeded owner, returned only on first creation */
   ownerPassword?: string
   error?: string
@@ -132,8 +135,8 @@ async function seedNodeOwner(
   // this goes through the service binding whenever one is configured. Plain
   // fetch is the fallback for a node on its own domain.
   const send: typeof fetch = env.GATEWAY
-    ? ((input, init) =>
-        (env.GATEWAY as { fetch: typeof fetch }).fetch(input, init))
+    ? (input, init) =>
+        (env.GATEWAY as { fetch: typeof fetch }).fetch(input, init)
     : fetch
 
   for (let attempt = 1; attempt <= 6; attempt++) {
@@ -189,8 +192,12 @@ async function seedNodeOwner(
 export async function provisionNode(
   env: MasterEnv,
   slug: string,
-  options: { owner?: NodeOwner } = {},
+  options: { owner?: NodeOwner; template?: string | null } = {},
 ): Promise<ProvisionResult> {
+  // Which repository this node's sites are generated from. A combo rather than
+  // one fleet-wide setting, so a second template needs a catalog entry and not
+  // a redeploy of every node.
+  const template = templateFor(options.template)
   const plan = planNode(slug)
   const cfg = cfConfigFrom(env)
   const steps: Array<ProvisionStep> = []
@@ -201,6 +208,7 @@ export async function provisionNode(
   const fail = (error: string): ProvisionResult => ({
     ok: false,
     slug,
+    templateKey: template.key,
     steps,
     d1DatabaseId,
     kvNamespaceId,
@@ -216,7 +224,11 @@ export async function provisionNode(
   } else if (alreadyExists(d1)) {
     d1DatabaseId = await findD1(cfg, plan.d1Name)
     if (!d1DatabaseId) {
-      steps.push({ name: 'd1', status: 'failed', detail: 'exists but not found' })
+      steps.push({
+        name: 'd1',
+        status: 'failed',
+        detail: 'exists but not found',
+      })
       return fail(`D1 ${plan.d1Name} already exists but could not be resolved`)
     }
     steps.push({ name: 'd1', status: 'already-existed', detail: d1DatabaseId })
@@ -227,7 +239,8 @@ export async function provisionNode(
 
   // 2. R2
   const r2 = await createR2Bucket(cfg, plan.r2Bucket)
-  if (r2.ok) steps.push({ name: 'r2', status: 'created', detail: plan.r2Bucket })
+  if (r2.ok)
+    steps.push({ name: 'r2', status: 'created', detail: plan.r2Bucket })
   else if (alreadyExists(r2)) {
     steps.push({ name: 'r2', status: 'already-existed', detail: plan.r2Bucket })
   } else {
@@ -243,7 +256,11 @@ export async function provisionNode(
   } else if (alreadyExists(kv)) {
     kvNamespaceId = await findKvNamespace(cfg, plan.kvTitle)
     if (!kvNamespaceId) {
-      steps.push({ name: 'kv', status: 'failed', detail: 'exists but not found' })
+      steps.push({
+        name: 'kv',
+        status: 'failed',
+        detail: 'exists but not found',
+      })
       return fail(`KV ${plan.kvTitle} already exists but could not be resolved`)
     }
     steps.push({ name: 'kv', status: 'already-existed', detail: kvNamespaceId })
@@ -328,7 +345,11 @@ export async function provisionNode(
     { type: 'plain_text', name: 'NODE_NAME', text: slug },
     // The node cannot work its own public address out from a request, because
     // the dispatch Worker strips the /n/<slug> prefix before forwarding.
-    { type: 'plain_text', name: 'PUBLIC_URL', text: nodeBaseUrl(env, slug) ?? '' },
+    {
+      type: 'plain_text',
+      name: 'PUBLIC_URL',
+      text: nodeBaseUrl(env, slug) ?? '',
+    },
     // One OAuth callback serves the whole fleet, because Cloudflare matches
     // redirect_uri exactly and cannot take a per-node path.
     {
@@ -366,7 +387,11 @@ export async function provisionNode(
   // simply never uses these.
   if (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET) {
     bindings.push(
-      { type: 'plain_text', name: 'GITHUB_CLIENT_ID', text: env.GITHUB_CLIENT_ID },
+      {
+        type: 'plain_text',
+        name: 'GITHUB_CLIENT_ID',
+        text: env.GITHUB_CLIENT_ID,
+      },
       {
         type: 'secret_text',
         name: 'GITHUB_CLIENT_SECRET',
@@ -399,11 +424,14 @@ export async function provisionNode(
       namespace_id: env.ROUTING_KV_ID,
     })
   }
-  if (env.GITHUB_TEMPLATE_REPO) {
+  // The combo's repository, falling back to the fleet-wide setting for nodes
+  // provisioned before there was a catalog.
+  const templateRepo = template.repo || env.GITHUB_TEMPLATE_REPO
+  if (templateRepo) {
     bindings.push({
       type: 'plain_text',
       name: 'GITHUB_TEMPLATE_REPO',
-      text: env.GITHUB_TEMPLATE_REPO,
+      text: templateRepo,
     })
   }
   if (assetsJwt) bindings.push({ type: 'assets', name: 'ASSETS' })
@@ -439,7 +467,8 @@ export async function provisionNode(
       status: seeded.ok ? 'created' : 'failed',
       detail: seeded.detail,
     })
-    if (!seeded.ok) return fail(`Seeding the node owner failed: ${seeded.detail}`)
+    if (!seeded.ok)
+      return fail(`Seeding the node owner failed: ${seeded.detail}`)
   } else {
     steps.push({ name: 'owner', status: 'skipped', detail: 'no owner given' })
   }
@@ -451,6 +480,7 @@ export async function provisionNode(
     d1DatabaseId,
     kvNamespaceId,
     templateVersion: image.version,
+    templateKey: template.key,
     ownerPassword,
   }
 }
@@ -525,7 +555,8 @@ export async function deprovisionNode(
     steps.push({ name: 'd1', status: 'skipped', detail: 'not found' })
   }
 
-  const kvId = options.kvNamespaceId ?? (await findKvNamespace(cfg, plan.kvTitle))
+  const kvId =
+    options.kvNamespaceId ?? (await findKvNamespace(cfg, plan.kvTitle))
   if (kvId) {
     const res = await deleteKvNamespace(cfg, kvId)
     steps.push({ name: 'kv', status: res.ok ? 'created' : 'failed' })
