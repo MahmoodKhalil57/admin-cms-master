@@ -16,6 +16,7 @@ import { Route as ApiResourceIdRouteImport } from './routes/api.$resource.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
 import { Route as ApiInternalHostnameRouteImport } from './routes/api.internal.hostname'
 import { Route as ApiInternalSeedAdminRouteImport } from './routes/api.internal.seed-admin'
+import { Route as ApiInternalSendRouteImport } from './routes/api.internal.send'
 import { Route as ApiProvisionSlugRouteImport } from './routes/api.provision.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const ApiInternalSeedAdminRoute = ApiInternalSeedAdminRouteImport.update({
   path: '/api/internal/seed-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInternalSendRoute = ApiInternalSendRouteImport.update({
+  id: '/api/internal/send',
+  path: '/api/internal/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiProvisionSlugRoute = ApiProvisionSlugRouteImport.update({
   id: '/api/provision/$slug',
   path: '/api/provision/$slug',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/internal/hostname': typeof ApiInternalHostnameRoute
   '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
+  '/api/internal/send': typeof ApiInternalSendRoute
   '/api/provision/$slug': typeof ApiProvisionSlugRoute
   '/api/$resource/': typeof ApiResourceIndexRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/internal/hostname': typeof ApiInternalHostnameRoute
   '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
+  '/api/internal/send': typeof ApiInternalSendRoute
   '/api/provision/$slug': typeof ApiProvisionSlugRoute
   '/api/$resource': typeof ApiResourceIndexRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/internal/hostname': typeof ApiInternalHostnameRoute
   '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
+  '/api/internal/send': typeof ApiInternalSendRoute
   '/api/provision/$slug': typeof ApiProvisionSlugRoute
   '/api/$resource/': typeof ApiResourceIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/internal/hostname'
     | '/api/internal/seed-admin'
+    | '/api/internal/send'
     | '/api/provision/$slug'
     | '/api/$resource/'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/internal/hostname'
     | '/api/internal/seed-admin'
+    | '/api/internal/send'
     | '/api/provision/$slug'
     | '/api/$resource'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/internal/hostname'
     | '/api/internal/seed-admin'
+    | '/api/internal/send'
     | '/api/provision/$slug'
     | '/api/$resource/'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiInternalHostnameRoute: typeof ApiInternalHostnameRoute
   ApiInternalSeedAdminRoute: typeof ApiInternalSeedAdminRoute
+  ApiInternalSendRoute: typeof ApiInternalSendRoute
   ApiProvisionSlugRoute: typeof ApiProvisionSlugRoute
   ApiResourceIndexRoute: typeof ApiResourceIndexRoute
 }
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInternalSeedAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/send': {
+      id: '/api/internal/send'
+      path: '/api/internal/send'
+      fullPath: '/api/internal/send'
+      preLoaderRoute: typeof ApiInternalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/provision/$slug': {
       id: '/api/provision/$slug'
       path: '/api/provision/$slug'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiInternalHostnameRoute: ApiInternalHostnameRoute,
   ApiInternalSeedAdminRoute: ApiInternalSeedAdminRoute,
+  ApiInternalSendRoute: ApiInternalSendRoute,
   ApiProvisionSlugRoute: ApiProvisionSlugRoute,
   ApiResourceIndexRoute: ApiResourceIndexRoute,
 }

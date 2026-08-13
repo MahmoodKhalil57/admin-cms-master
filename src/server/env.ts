@@ -57,6 +57,12 @@ export interface MasterEnv {
   /** repo new sites are generated from, as `owner/repo` */
   GITHUB_TEMPLATE_REPO?: string
   /**
+   * Where mail comes from when a node's own hostname is not a zone we host.
+   * Cloudflare will not sign for a domain it does not hold, so this is the
+   * fallback that keeps invitations arriving.
+   */
+  MAIL_FROM?: string
+  /**
    * The platform's Cloudflare OAuth app, so a node can write DNS records into
    * an operator's own zone instead of making them copy the records by hand.
    */
