@@ -216,3 +216,24 @@ export async function deleteDispatchScript(
     { method: 'DELETE' },
   )
 }
+
+/**
+ * Every script in the dispatch namespace, by name.
+ *
+ * So the fleet can notice what it has forgotten. A script with no node row
+ * behind it is never rolled and never torn down — it simply keeps answering on
+ * whatever build it was left on, and nothing in master would ever mention it.
+ */
+export async function listDispatchScripts(
+  cfg: CfConfig,
+  namespace: string,
+): Promise<Array<string>> {
+  const answer = await cf<Array<{ id?: string; script_name?: string }>>(
+    cfg,
+    `/accounts/${cfg.accountId}/workers/dispatch/namespaces/${namespace}/scripts`,
+  )
+  if (!answer.ok) return []
+  return (answer.result ?? [])
+    .map((script) => script.script_name ?? script.id ?? '')
+    .filter(Boolean)
+}

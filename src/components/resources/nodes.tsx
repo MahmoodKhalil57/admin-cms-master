@@ -14,6 +14,7 @@ import {
 import { useRecordContext } from 'ra-core'
 
 import { ProvisionButton } from '#/components/resources/provision-button'
+import { NodeAccess } from '#/components/resources/node-access'
 import {
   DEFAULT_TEMPLATE,
   TEMPLATE_CATALOG,
@@ -129,6 +130,7 @@ export const NodeShow = () => (
       <DateField source="createdAt" showTime />
       <BaseNodeNotice />
       <ProvisionButton />
+      <NodeAccess />
       <ProvisionButton action="destroy" />
     </SimpleShowLayout>
   </Show>

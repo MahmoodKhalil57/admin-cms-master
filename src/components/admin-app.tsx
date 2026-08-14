@@ -1,8 +1,10 @@
 import { Resource } from 'ra-core'
+import { Layers } from 'lucide-react'
 import { tanStackRouterProvider } from 'ra-router-tanstack'
 
 import { Admin } from '#/components/admin'
 import { LoginPage } from '#/components/login-page'
+import { FleetPage } from '#/components/resources/fleet'
 import { authProvider } from '#/lib/auth-provider'
 import { dataProvider } from '#/lib/data-provider'
 import {
@@ -36,6 +38,12 @@ export function AdminApp() {
       disableTelemetry
       title="adminCms"
     >
+      <Resource
+        name="fleet"
+        options={{ label: 'Fleet' }}
+        list={FleetPage}
+        icon={Layers}
+      />
       <Resource
         name="nodes"
         list={NodeList}

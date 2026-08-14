@@ -120,11 +120,13 @@ async function seedNodeOwner(
   token: string,
   owner: NodeOwner,
   password: string,
-): Promise<{ ok: boolean; detail: string }> {
+  reset = false,
+): Promise<{ ok: boolean; detail: string; applied: boolean }> {
   const base = nodeBaseUrl(env, slug)
   if (!base) {
     return {
       ok: false,
+      applied: false,
       detail: 'no NODE_ZONE or DISPATCHER_URL set, so the node is unreachable',
     }
   }
@@ -151,18 +153,26 @@ async function seedNodeOwner(
           email: owner.email,
           name: owner.name,
           password,
+          reset,
           masterUserId: owner.masterUserId,
         }),
       })
 
       const text = await response.text()
       if (response.ok) {
-        const body = JSON.parse(text) as { seeded?: boolean }
+        const body = JSON.parse(text) as { seeded?: boolean; reset?: boolean }
+        // `applied` is whether the password in hand is actually the one that
+        // works. Returning a generated password that was never set is how
+        // somebody ends up with a credential written down that refuses to sign
+        // them in, and no way to tell which of the two is wrong.
         return {
           ok: true,
+          applied: Boolean(body.seeded || body.reset),
           detail: body.seeded
             ? `owner ${owner.email} created`
-            : 'owner already existed',
+            : body.reset
+              ? `owner ${owner.email} password reset`
+              : 'owner already existed, password unchanged',
         }
       }
       lastDetail = `HTTP ${response.status}: ${text.slice(0, 160)}`
@@ -173,7 +183,32 @@ async function seedNodeOwner(
     await new Promise((resolve) => setTimeout(resolve, attempt * 1000))
   }
 
-  return { ok: false, detail: lastDetail }
+  return { ok: false, applied: false, detail: lastDetail }
+}
+
+/**
+ * Gives an existing node's root admin a new password.
+ *
+ * Separate from provisioning because it is a different act with a different
+ * risk. Provisioning is safe to re-run; this ends every session that account
+ * has open and invalidates whatever they were using before, so it should be
+ * something somebody chose rather than a side effect of a redeploy.
+ */
+export async function resetNodeOwner(
+  env: MasterEnv,
+  slug: string,
+  owner: NodeOwner,
+): Promise<{ ok: boolean; detail: string; password?: string }> {
+  const token = await deriveNodeSecret(env, slug, 'provision')
+  const password = crypto.randomUUID()
+  const seeded = await seedNodeOwner(env, slug, token, owner, password, true)
+
+  return {
+    ok: seeded.ok && seeded.applied,
+    detail: seeded.detail,
+    // Only when it is true. See above.
+    password: seeded.applied ? password : undefined,
+  }
 }
 
 /**
@@ -454,14 +489,18 @@ export async function provisionNode(
   //    master user id that links the two accounts.
   let ownerPassword: string | undefined
   if (options.owner) {
-    ownerPassword = crypto.randomUUID()
+    const candidate = crypto.randomUUID()
     const seeded = await seedNodeOwner(
       env,
       slug,
       provisionToken,
       options.owner,
-      ownerPassword,
+      candidate,
     )
+    // Only handed back when the node actually applied it. A reprovision of a
+    // node whose owner already exists leaves their password alone, and saying
+    // otherwise gives somebody a credential to write down that will not work.
+    ownerPassword = seeded.applied ? candidate : undefined
     steps.push({
       name: 'owner',
       status: seeded.ok ? 'created' : 'failed',
