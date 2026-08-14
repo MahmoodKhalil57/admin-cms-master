@@ -11,6 +11,7 @@ import {
 } from '#/server/custom-hostnames'
 import { getEnv } from '#/server/env'
 import { cfConfigFrom, deriveNodeSecret } from '#/server/provision'
+import { routeHostnameToDispatcher } from '#/server/cloudflare'
 
 /**
  * Registers a customer hostname so Cloudflare issues a certificate for it.
@@ -84,6 +85,23 @@ export const Route = createFileRoute('/api/internal/hostname')(
 
         const registered = await ensureCustomHostname(env, cfg, body.hostname)
 
+        /*
+          A hostname on the platform's own zone is served by Worker routes, not
+          by Cloudflare for SaaS — the custom-hostname path above is for domains
+          on somebody else's account.
+
+          This is the step that was missing. The DNS record was written and the
+          node's slug was mapped, and nothing ever put a route on the zone, so
+          the edge had no reason to hand the request to the dispatcher. The
+          website worked and the panel did not, which reads like a broken panel
+          rather than an absent route.
+        */
+        const routed = await routeHostnameToDispatcher(
+          cfg,
+          body.hostname,
+          env.DISPATCHER_SCRIPT ?? 'admincms-dispatcher',
+        )
+
         // Master probes rather than the node, for two reasons: a Worker's
         // subrequest to a hostname on its own zone bypasses the Worker route
         // (Cloudflare avoids the loop) and lands on the origin instead, and a
@@ -91,7 +109,7 @@ export const Route = createFileRoute('/api/internal/hostname')(
         // Asking from outside is the only way to learn whether it serves.
         const probe = await probeHostname(body.hostname)
 
-        return Response.json({ ok: true, ...registered, probe })
+        return Response.json({ ok: true, ...registered, routed, probe })
       } catch (error) {
         const message =
           error instanceof Error ? error.message : String(error)

@@ -237,3 +237,80 @@ export async function listDispatchScripts(
     .map((script) => script.script_name ?? script.id ?? '')
     .filter(Boolean)
 }
+
+/**
+ * Puts a node's panel and API on a hostname that lives on the platform's zone.
+ *
+ * Two things have to be true and only one of them is a DNS record.
+ *
+ * The record must be **proxied**. A grey-cloud record goes straight to GitHub
+ * Pages and never touches Cloudflare's edge, so a Worker route on it can never
+ * fire — the website works and `/admin` and `/api` quietly do not. That was the
+ * state this fixes: the records were written unproxied on the theory that
+ * proxying breaks GitHub's certificate, and the node that has worked all along
+ * has been proxied the entire time.
+ *
+ * Then the routes. Only `/admin*` and `/api*` go to the dispatcher; everything
+ * else stays with Pages, which is what lets one hostname be both a website and
+ * a node without either knowing about the other.
+ *
+ * Master does this rather than the node. It needs an account-scoped token that
+ * must never reach a node, and the node's own Cloudflare connection is granted
+ * DNS only — deliberately, since it is somebody else's account.
+ */
+export async function routeHostnameToDispatcher(
+  cfg: CfConfig,
+  hostname: string,
+  script: string,
+): Promise<{ ok: boolean; note: string }> {
+  const root = hostname.split('.').slice(-2).join('.')
+  const zones = await cf<Array<{ id: string; name: string }>>(
+    cfg,
+    `/zones?name=${encodeURIComponent(root)}`,
+  )
+  const zone = zones.result?.[0]
+  if (!zone) {
+    // Not our zone. That is the Cloudflare-for-SaaS case, handled elsewhere.
+    return { ok: false, note: `${root} is not on this platform's account.` }
+  }
+
+  const records = await cf<Array<{ id: string; proxied: boolean }>>(
+    cfg,
+    `/zones/${zone.id}/dns_records?name=${encodeURIComponent(hostname)}&per_page=100`,
+  )
+  const record = records.result?.[0]
+  if (!record) {
+    return { ok: false, note: `No DNS record for ${hostname} yet.` }
+  }
+  if (!record.proxied) {
+    const proxied = await cf(cfg, `/zones/${zone.id}/dns_records/${record.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ proxied: true }),
+    })
+    if (!proxied.ok) {
+      return { ok: false, note: `Could not proxy the record for ${hostname}.` }
+    }
+  }
+
+  const existing = await cf<Array<{ pattern: string }>>(
+    cfg,
+    `/zones/${zone.id}/workers/routes`,
+  )
+  const have = new Set((existing.result ?? []).map((route) => route.pattern))
+
+  for (const pattern of [`${hostname}/admin*`, `${hostname}/api*`]) {
+    if (have.has(pattern)) continue
+    const made = await cf(cfg, `/zones/${zone.id}/workers/routes`, {
+      method: 'POST',
+      body: JSON.stringify({ pattern, script }),
+    })
+    if (!made.ok) {
+      return { ok: false, note: `Could not add the route ${pattern}.` }
+    }
+  }
+
+  return {
+    ok: true,
+    note: `${hostname}/admin and /api routed to this node; the rest stays with the website.`,
+  }
+}
