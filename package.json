@@ -20,7 +20,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "publish:image": "bun run scripts/publish-image.ts",
-    "deploy": "bun run build && wrangler deploy -c .output/server/wrangler.json"
+    "deploy": "bun run build && wrangler deploy -c .output/server/wrangler.json",
+    "publish:release": "bun run scripts/publish-release.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",
