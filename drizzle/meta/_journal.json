@@ -15,6 +15,13 @@
       "when": 1786600086626,
       "tag": "0001_brave_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786764840262,
+      "tag": "0002_metering",
+      "breakpoints": true
     }
   ]
 }

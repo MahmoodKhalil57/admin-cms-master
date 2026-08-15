@@ -3,6 +3,7 @@ import {
   useCanAccess,
   useCreatePath,
   useGetResourceLabel,
+  useDefaultTitle,
   useHasDashboard,
   useResourceDefinitions,
   useTranslate,
@@ -45,6 +46,8 @@ export function AppSidebar() {
       setOpenMobile(false);
     }
   };
+  const title = useDefaultTitle() || 'adminCms'
+
   return (
     <Sidebar variant="floating" collapsible="icon">
       <SidebarHeader>
@@ -56,7 +59,10 @@ export function AppSidebar() {
             >
               <LinkBase to="/">
                 <Shell className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                {/* The app's own title, not the kit's demo branding. It is
+                    already passed to <Admin>; hardcoding it here meant every
+                    console shipped somebody else's company name. */}
+                <span className="text-base font-semibold">{title}</span>
               </LinkBase>
             </SidebarMenuButton>
           </SidebarMenuItem>

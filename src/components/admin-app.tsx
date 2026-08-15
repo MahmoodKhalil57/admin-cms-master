@@ -1,10 +1,11 @@
 import { Resource } from 'ra-core'
-import { Layers } from 'lucide-react'
+import { Gauge, Layers } from 'lucide-react'
 import { tanStackRouterProvider } from 'ra-router-tanstack'
 
 import { Admin } from '#/components/admin'
 import { LoginPage } from '#/components/login-page'
 import { FleetPage } from '#/components/resources/fleet'
+import { UsagePage } from '#/components/resources/usage'
 import { authProvider } from '#/lib/auth-provider'
 import { dataProvider } from '#/lib/data-provider'
 import {
@@ -43,6 +44,12 @@ export function AdminApp() {
         options={{ label: 'Fleet' }}
         list={FleetPage}
         icon={Layers}
+      />
+      <Resource
+        name="usage"
+        options={{ label: 'Usage' }}
+        list={UsagePage}
+        icon={Gauge}
       />
       <Resource
         name="nodes"
