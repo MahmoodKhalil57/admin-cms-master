@@ -125,3 +125,94 @@ export const creditLedger = sqliteTable(
   },
   (table) => [index('credit_ledger_node').on(table.nodeId)],
 )
+
+/**
+ * What credits can be bought in.
+ *
+ * Rows rather than code, unlike the price list — what things *cost* the
+ * platform to run is a property of the build, but what somebody is *sold* is a
+ * commercial decision that changes without a deploy. A package withdrawn keeps
+ * its subscriptions running: `active` decides whether it can be bought, never
+ * whether it can be held.
+ *
+ * `monthly` is the whole difference between a top-up and a subscription. Both
+ * put the same credits in the same ledger; one does it once and one does it
+ * every month until somebody stops it.
+ */
+export const creditPackages = sqliteTable(
+  'credit_packages',
+  {
+    id: integer({ mode: 'number' }).primaryKey({ autoIncrement: true }),
+    key: text().notNull().unique(),
+    name: text().notNull(),
+    description: text(),
+    credits: integer().notNull(),
+    /** smallest unit of `currency` */
+    price: integer().notNull(),
+    currency: text().notNull().default('USD'),
+    /** whether buying it starts a subscription rather than a single payment */
+    monthly: integer({ mode: 'boolean' }).notNull().default(false),
+    /** whether it can still be bought */
+    active: integer({ mode: 'boolean' }).notNull().default(true),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(
+      sql`(unixepoch())`,
+    ),
+  },
+  (table) => [index('credit_packages_active').on(table.active)],
+)
+
+/**
+ * A node on a monthly package.
+ *
+ * The credits a subscription delivers are posted to `credit_ledger` like any
+ * other purchase — one line per invoice, keyed by the invoice id. So a renewal
+ * that Stripe delivers twice grants once, and a subscription that lapses simply
+ * stops adding lines rather than needing anything taken away.
+ *
+ * Which means this table records the *relationship*, not the money. What was
+ * actually delivered is in the ledger, and the two can be compared.
+ */
+export const subscriptions = sqliteTable(
+  'subscriptions',
+  {
+    id: integer({ mode: 'number' }).primaryKey({ autoIncrement: true }),
+    nodeId: integer('node_id')
+      .notNull()
+      .references(() => nodes.id, { onDelete: 'cascade' }),
+    packageKey: text('package_key').notNull(),
+    /** the provider's subscription id */
+    providerRef: text('provider_ref').notNull().unique(),
+    /** the provider's customer id, so a second purchase reuses it */
+    customerRef: text('customer_ref'),
+    /** `active`, `past_due`, `canceled` — the provider's word, not ours */
+    status: text().notNull().default('active'),
+    currentPeriodEnd: integer('current_period_end', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(
+      sql`(unixepoch())`,
+    ),
+  },
+  (table) => [index('subscriptions_node').on(table.nodeId)],
+)
+
+/**
+ * Every webhook the provider has sent master, kept whether or not it mattered.
+ *
+ * The same table the node has, for the same reason and with the same unique
+ * index: providers retry and deliver out of order, and reading "have I seen
+ * this" before acting leaves a gap that a second delivery fits into exactly.
+ */
+export const billingEvents = sqliteTable(
+  'billing_events',
+  {
+    id: integer({ mode: 'number' }).primaryKey({ autoIncrement: true }),
+    providerEventId: text('provider_event_id').notNull(),
+    type: text().notNull(),
+    payload: text({ mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
+    result: text(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(
+      sql`(unixepoch())`,
+    ),
+  },
+  (table) => [uniqueIndex('billing_events_unique').on(table.providerEventId)],
+)

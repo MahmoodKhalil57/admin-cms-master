@@ -11,16 +11,19 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
+import { Route as ApiBillingRouteImport } from './routes/api.billing'
 import { Route as ApiFleetRouteImport } from './routes/api.fleet'
 import { Route as ApiUsageRouteImport } from './routes/api.usage'
 import { Route as ApiResourceIndexRouteImport } from './routes/api.$resource.index'
 import { Route as ApiResourceIdRouteImport } from './routes/api.$resource.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
+import { Route as ApiInternalBillingRouteImport } from './routes/api.internal.billing'
 import { Route as ApiInternalHostnameRouteImport } from './routes/api.internal.hostname'
 import { Route as ApiInternalSeedAdminRouteImport } from './routes/api.internal.seed-admin'
 import { Route as ApiInternalSendRouteImport } from './routes/api.internal.send'
 import { Route as ApiInternalUsageRouteImport } from './routes/api.internal.usage'
 import { Route as ApiProvisionSlugRouteImport } from './routes/api.provision.$slug'
+import { Route as ApiWebhooksStripeRouteImport } from './routes/api.webhooks.stripe'
 import { Route as ApiNodesSlugOwnerRouteImport } from './routes/api.nodes.$slug.owner'
 
 const IndexRoute = IndexRouteImport.update({
@@ -31,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBillingRoute = ApiBillingRouteImport.update({
+  id: '/api/billing',
+  path: '/api/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiFleetRoute = ApiFleetRouteImport.update({
@@ -58,6 +66,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInternalBillingRoute = ApiInternalBillingRouteImport.update({
+  id: '/api/internal/billing',
+  path: '/api/internal/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInternalHostnameRoute = ApiInternalHostnameRouteImport.update({
   id: '/api/internal/hostname',
   path: '/api/internal/hostname',
@@ -83,6 +96,11 @@ const ApiProvisionSlugRoute = ApiProvisionSlugRouteImport.update({
   path: '/api/provision/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksStripeRoute = ApiWebhooksStripeRouteImport.update({
+  id: '/api/webhooks/stripe',
+  path: '/api/webhooks/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiNodesSlugOwnerRoute = ApiNodesSlugOwnerRouteImport.update({
   id: '/api/nodes/$slug/owner',
   path: '/api/nodes/$slug/owner',
@@ -92,30 +110,36 @@ const ApiNodesSlugOwnerRoute = ApiNodesSlugOwnerRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/billing': typeof ApiBillingRoute
   '/api/fleet': typeof ApiFleetRoute
   '/api/usage': typeof ApiUsageRoute
   '/api/$resource/$id': typeof ApiResourceIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/internal/billing': typeof ApiInternalBillingRoute
   '/api/internal/hostname': typeof ApiInternalHostnameRoute
   '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
   '/api/internal/send': typeof ApiInternalSendRoute
   '/api/internal/usage': typeof ApiInternalUsageRoute
   '/api/provision/$slug': typeof ApiProvisionSlugRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/api/$resource/': typeof ApiResourceIndexRoute
   '/api/nodes/$slug/owner': typeof ApiNodesSlugOwnerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/billing': typeof ApiBillingRoute
   '/api/fleet': typeof ApiFleetRoute
   '/api/usage': typeof ApiUsageRoute
   '/api/$resource/$id': typeof ApiResourceIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/internal/billing': typeof ApiInternalBillingRoute
   '/api/internal/hostname': typeof ApiInternalHostnameRoute
   '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
   '/api/internal/send': typeof ApiInternalSendRoute
   '/api/internal/usage': typeof ApiInternalUsageRoute
   '/api/provision/$slug': typeof ApiProvisionSlugRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/api/$resource': typeof ApiResourceIndexRoute
   '/api/nodes/$slug/owner': typeof ApiNodesSlugOwnerRoute
 }
@@ -123,15 +147,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/billing': typeof ApiBillingRoute
   '/api/fleet': typeof ApiFleetRoute
   '/api/usage': typeof ApiUsageRoute
   '/api/$resource/$id': typeof ApiResourceIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/internal/billing': typeof ApiInternalBillingRoute
   '/api/internal/hostname': typeof ApiInternalHostnameRoute
   '/api/internal/seed-admin': typeof ApiInternalSeedAdminRoute
   '/api/internal/send': typeof ApiInternalSendRoute
   '/api/internal/usage': typeof ApiInternalUsageRoute
   '/api/provision/$slug': typeof ApiProvisionSlugRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/api/$resource/': typeof ApiResourceIndexRoute
   '/api/nodes/$slug/owner': typeof ApiNodesSlugOwnerRoute
 }
@@ -140,45 +167,54 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/api/billing'
     | '/api/fleet'
     | '/api/usage'
     | '/api/$resource/$id'
     | '/api/auth/$'
+    | '/api/internal/billing'
     | '/api/internal/hostname'
     | '/api/internal/seed-admin'
     | '/api/internal/send'
     | '/api/internal/usage'
     | '/api/provision/$slug'
+    | '/api/webhooks/stripe'
     | '/api/$resource/'
     | '/api/nodes/$slug/owner'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$'
+    | '/api/billing'
     | '/api/fleet'
     | '/api/usage'
     | '/api/$resource/$id'
     | '/api/auth/$'
+    | '/api/internal/billing'
     | '/api/internal/hostname'
     | '/api/internal/seed-admin'
     | '/api/internal/send'
     | '/api/internal/usage'
     | '/api/provision/$slug'
+    | '/api/webhooks/stripe'
     | '/api/$resource'
     | '/api/nodes/$slug/owner'
   id:
     | '__root__'
     | '/'
     | '/$'
+    | '/api/billing'
     | '/api/fleet'
     | '/api/usage'
     | '/api/$resource/$id'
     | '/api/auth/$'
+    | '/api/internal/billing'
     | '/api/internal/hostname'
     | '/api/internal/seed-admin'
     | '/api/internal/send'
     | '/api/internal/usage'
     | '/api/provision/$slug'
+    | '/api/webhooks/stripe'
     | '/api/$resource/'
     | '/api/nodes/$slug/owner'
   fileRoutesById: FileRoutesById
@@ -186,15 +222,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  ApiBillingRoute: typeof ApiBillingRoute
   ApiFleetRoute: typeof ApiFleetRoute
   ApiUsageRoute: typeof ApiUsageRoute
   ApiResourceIdRoute: typeof ApiResourceIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiInternalBillingRoute: typeof ApiInternalBillingRoute
   ApiInternalHostnameRoute: typeof ApiInternalHostnameRoute
   ApiInternalSeedAdminRoute: typeof ApiInternalSeedAdminRoute
   ApiInternalSendRoute: typeof ApiInternalSendRoute
   ApiInternalUsageRoute: typeof ApiInternalUsageRoute
   ApiProvisionSlugRoute: typeof ApiProvisionSlugRoute
+  ApiWebhooksStripeRoute: typeof ApiWebhooksStripeRoute
   ApiResourceIndexRoute: typeof ApiResourceIndexRoute
   ApiNodesSlugOwnerRoute: typeof ApiNodesSlugOwnerRoute
 }
@@ -213,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: '/$'
       fullPath: '/$'
       preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing': {
+      id: '/api/billing'
+      path: '/api/billing'
+      fullPath: '/api/billing'
+      preLoaderRoute: typeof ApiBillingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/fleet': {
@@ -250,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/billing': {
+      id: '/api/internal/billing'
+      path: '/api/internal/billing'
+      fullPath: '/api/internal/billing'
+      preLoaderRoute: typeof ApiInternalBillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/internal/hostname': {
       id: '/api/internal/hostname'
       path: '/api/internal/hostname'
@@ -285,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiProvisionSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/stripe': {
+      id: '/api/webhooks/stripe'
+      path: '/api/webhooks/stripe'
+      fullPath: '/api/webhooks/stripe'
+      preLoaderRoute: typeof ApiWebhooksStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/nodes/$slug/owner': {
       id: '/api/nodes/$slug/owner'
       path: '/api/nodes/$slug/owner'
@@ -298,15 +358,18 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  ApiBillingRoute: ApiBillingRoute,
   ApiFleetRoute: ApiFleetRoute,
   ApiUsageRoute: ApiUsageRoute,
   ApiResourceIdRoute: ApiResourceIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiInternalBillingRoute: ApiInternalBillingRoute,
   ApiInternalHostnameRoute: ApiInternalHostnameRoute,
   ApiInternalSeedAdminRoute: ApiInternalSeedAdminRoute,
   ApiInternalSendRoute: ApiInternalSendRoute,
   ApiInternalUsageRoute: ApiInternalUsageRoute,
   ApiProvisionSlugRoute: ApiProvisionSlugRoute,
+  ApiWebhooksStripeRoute: ApiWebhooksStripeRoute,
   ApiResourceIndexRoute: ApiResourceIndexRoute,
   ApiNodesSlugOwnerRoute: ApiNodesSlugOwnerRoute,
 }

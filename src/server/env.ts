@@ -15,6 +15,16 @@ import type {
 export interface MasterEnv {
   /** master's own control-plane database */
   DB: D1Database
+  /**
+   * The platform's own Stripe keys — ours, not an operator's.
+   *
+   * A node's operator pastes their keys into their own node, because they are
+   * selling to their own customers. These are for selling *to* them, so they
+   * belong to us and live in the Worker's secrets rather than in a row anybody
+   * can edit from a console.
+   */
+  STRIPE_SECRET_KEY?: string
+  STRIPE_WEBHOOK_SECRET?: string
   /** built node-template images, content-addressed assets */
   IMAGES: R2Bucket
   /**

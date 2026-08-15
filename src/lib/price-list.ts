@@ -42,6 +42,19 @@ export interface MeterItem {
   per?: number
   /** not yet actually measured, and the screens should say so rather than show zero */
   pending?: boolean
+  /**
+   * Who pays for this.
+   *
+   * The two meters read the same list and take different halves of it, because
+   * the same act can be a different service to two different people. Processing
+   * an order is something the platform does for the node; making a sale is
+   * something the node does for a vendor. Billing both parties for one item
+   * would charge one of them for the other's service — and billing neither is
+   * how a marketplace's vendors run free.
+   *
+   * Defaults to `node`, because most of what a node does is the node's own.
+   */
+  billTo?: 'node' | 'vendor' | 'both'
 }
 
 /**
@@ -71,6 +84,9 @@ export const PRICE_LIST: Array<MeterItem> = [
     eventName: 'submission.created',
     credits: 1,
     unit: 'each',
+    // Both: an enquiry costs the node to receive, and costs the vendor it was
+    // about. Only the ones carrying a vendor reach the vendor's meter.
+    billTo: 'both',
   },
   {
     key: 'order',
@@ -89,6 +105,7 @@ export const PRICE_LIST: Array<MeterItem> = [
     eventName: 'booking.confirmed',
     credits: 3,
     unit: 'each',
+    billTo: 'both',
   },
   {
     key: 'email',
@@ -107,6 +124,25 @@ export const PRICE_LIST: Array<MeterItem> = [
     eventName: 'content.committed',
     credits: 1,
     unit: 'each',
+  },
+  {
+    /*
+      A vendor's own sale.
+
+      Its own item rather than reusing `order`, and this is the distinction
+      that makes feature 8 work at all: an order can carry several vendors, so
+      `order.paid` cannot say whose it was and never will. A separate event is
+      recorded per vendor on a paid order, which is also the honest description
+      — one order, several sales.
+    */
+    key: 'vendor-sale',
+    name: 'Sales made',
+    description: 'A sale of this vendor’s own goods or time.',
+    source: 'events',
+    eventName: 'vendor.sale',
+    credits: 5,
+    unit: 'each',
+    billTo: 'vendor',
   },
   {
     key: 'storage',
@@ -147,6 +183,14 @@ export const PRICE_LIST: Array<MeterItem> = [
     pending: true,
   },
 ]
+
+/** The half of the list one meter is responsible for. */
+export function itemsFor(who: 'node' | 'vendor'): Array<MeterItem> {
+  return PRICE_LIST.filter((item) => {
+    const bill = item.billTo ?? 'node'
+    return bill === who || bill === 'both'
+  })
+}
 
 export function meterItem(key: string): MeterItem | undefined {
   return PRICE_LIST.find((item) => item.key === key)
